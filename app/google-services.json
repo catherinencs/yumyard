@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "291697631249",
+    "project_id": "yumyard-e18a4",
+    "storage_bucket": "yumyard-e18a4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291697631249:android:5ea8639ece8b255d1351b0",
+        "android_client_info": {
+          "package_name": "com.example.yumyard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTFG3ZFVNrJitz4hFC8hG4cfAw42W6jlY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
