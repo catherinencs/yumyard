@@ -8,6 +8,7 @@ public class YelpSearchResult {
     public static class Business {
         public String id;
         public String name;
+        public String image_url;
         public Location location;
 
         public static class Location {
