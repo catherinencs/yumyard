@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class HomeFragment extends Fragment implements PriceRangeDialogFragment.PriceRangeSelectionListener {
+public class HomeFragment extends Fragment implements PriceRangeDialogFragment.PriceRangeSelectionListener, CuisineDialogFragment.CuisineSelectionListener {
 
     private static final String TAG = "HomeFragment";
     private RecyclerView recyclerView;
@@ -42,6 +42,7 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
     private FusedLocationProviderClient fusedLocationProviderClient;
     private String selectedLocation;
     private String selectedPriceRange = ""; // To store the selected price range
+    private String selectedCuisines = ""; // To store the selected cuisines
 
     @Nullable
     @Override
@@ -96,6 +97,9 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         // Price range button functionality
         priceRangeButton.setOnClickListener(v -> showPriceRangeDialog());
 
+        // Cuisine button functionality
+        cuisineButton.setOnClickListener(v -> showCuisineDialog());
+
         // Search functionality
         searchBar.setOnEditorActionListener((v, actionId, event) -> {
             if (selectedLocation != null) {
@@ -126,8 +130,8 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
     }
 
     private void searchRestaurants(String location, String term) {
-        Log.d(TAG, "Searching Restaurants: Location=" + location + ", Term=" + term + ", Price=" + selectedPriceRange);
-        restaurantRepository.searchRestaurants(location, term, selectedPriceRange, new RestaurantRepository.RestaurantListCallback() {
+        Log.d(TAG, "Searching Restaurants: Location=" + location + ", Term=" + term + ", Price=" + selectedPriceRange + ", Cuisines=" + selectedCuisines);
+        restaurantRepository.searchRestaurants(location, term, selectedPriceRange, selectedCuisines, new RestaurantRepository.RestaurantListCallback() {
             @Override
             public void onSuccess(List<Restaurant> restaurants) {
                 if (restaurants.isEmpty()) {
@@ -153,6 +157,12 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         dialog.show(getParentFragmentManager(), "priceRangeDialog");
     }
 
+    private void showCuisineDialog() {
+        CuisineDialogFragment dialog = new CuisineDialogFragment();
+        dialog.setCuisineSelectionListener(this);
+        dialog.show(getParentFragmentManager(), "cuisineDialog");
+    }
+
     @Override
     public void onPriceRangeSelected(String selectedPrices) {
         selectedPriceRange = selectedPrices;
@@ -166,6 +176,26 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         }
 
         // Trigger a new search with the updated price range
+        if (selectedLocation != null) {
+            searchRestaurants(selectedLocation, searchBar.getText().toString());
+        } else {
+            Toast.makeText(getActivity(), "Please select a location first.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onCuisineSelected(String selectedCuisines) {
+        this.selectedCuisines = selectedCuisines;
+        Log.d(TAG, "Selected Cuisines: " + selectedCuisines);
+
+        // Update the button text with the selected cuisines
+        if (selectedCuisines.isEmpty()) {
+            cuisineButton.setText("Cuisine");
+        } else {
+            cuisineButton.setText(convertCuisinesToDisplay(selectedCuisines));
+        }
+
+        // Trigger a new search with the updated cuisines
         if (selectedLocation != null) {
             searchRestaurants(selectedLocation, searchBar.getText().toString());
         } else {
@@ -191,5 +221,33 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
             dollarSigns.setLength(dollarSigns.length() - 2); // Remove trailing comma and space
         }
         return dollarSigns.toString();
+    }
+
+    private String convertCuisinesToDisplay(String cuisines) {
+        // Convert the categories to a displayable string
+        StringBuilder displayCuisines = new StringBuilder();
+        for (String cuisine : cuisines.split(",")) {
+            if (cuisine.equals("newamerican")) {
+                displayCuisines.append("American, ");
+            } else if (cuisine.equals("chinese")) {
+                displayCuisines.append("Chinese, ");
+            } else if (cuisine.equals("japanese")) {
+                displayCuisines.append("Japanese, ");
+            } else if (cuisine.equals("korean")) {
+                displayCuisines.append("Korean, ");
+            } else if (cuisine.equals("indpak")) {
+                displayCuisines.append("Indian, ");
+            } else if (cuisine.equals("mexican")) {
+                displayCuisines.append("Mexican, ");
+            } else if (cuisine.equals("mediterranean")) {
+                displayCuisines.append("Mediterranean, ");
+            } else if (cuisine.equals("italian")) {
+                displayCuisines.append("Italian, ");
+            }
+        }
+        if (displayCuisines.length() > 0) {
+            displayCuisines.setLength(displayCuisines.length() - 2); // Remove trailing comma and space
+        }
+        return displayCuisines.toString();
     }
 }
