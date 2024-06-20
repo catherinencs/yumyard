@@ -70,6 +70,7 @@ public class RestaurantRepository {
                         Restaurant restaurant = new Restaurant();
                         restaurant.setRestaurantId(business.id);
                         restaurant.setName(business.name);
+                        restaurant.setImageUrl(business.image_url); // Set the image URL
                         restaurant.setAddress(business.location.address1);
                         restaurants.add(restaurant);
                     }

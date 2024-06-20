@@ -3,9 +3,11 @@ package com.example.yumyard.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import com.example.yumyard.R;
 import com.example.yumyard.model.Restaurant;
 
@@ -32,6 +34,11 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Re
         Restaurant restaurant = restaurantList.get(position);
         holder.restaurantName.setText(restaurant.getName());
         holder.restaurantAddress.setText(restaurant.getAddress());
+        // Load the image using Glide
+        Glide.with(holder.itemView.getContext())
+                .load(restaurant.getImageUrl())
+                .placeholder(R.drawable.placeholder_image) // Placeholder image
+                .into(holder.restaurantImage);
     }
 
     @Override
@@ -47,11 +54,13 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Re
     static class RestaurantViewHolder extends RecyclerView.ViewHolder {
         TextView restaurantName;
         TextView restaurantAddress;
+        ImageView restaurantImage;
 
         public RestaurantViewHolder(@NonNull View itemView) {
             super(itemView);
             restaurantName = itemView.findViewById(R.id.restaurant_name);
             restaurantAddress = itemView.findViewById(R.id.restaurant_address);
+            restaurantImage = itemView.findViewById(R.id.restaurant_image); // Add ImageView
         }
     }
 }
