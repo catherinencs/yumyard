@@ -1,12 +1,15 @@
 package com.example.yumyard.adapter;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.example.yumyard.R;
 import com.example.yumyard.model.Restaurant;
@@ -15,10 +18,18 @@ import java.util.List;
 
 public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.RestaurantViewHolder> {
 
-    private List<Restaurant> restaurantList;
+    public interface OnItemClickListener {
+        void onItemClick(Restaurant restaurant);
+    }
 
-    public RestaurantAdapter(List<Restaurant> restaurantList) {
+    private Context context;
+    private List<Restaurant> restaurantList;
+    private OnItemClickListener onItemClickListener;
+
+    public RestaurantAdapter(Context context, List<Restaurant> restaurantList, OnItemClickListener onItemClickListener) {
+        this.context = context;
         this.restaurantList = restaurantList;
+        this.onItemClickListener = onItemClickListener;
     }
 
     @NonNull
@@ -34,11 +45,12 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Re
         Restaurant restaurant = restaurantList.get(position);
         holder.restaurantName.setText(restaurant.getName());
         holder.restaurantAddress.setText(restaurant.getAddress());
-        // Load the image using Glide
-        Glide.with(holder.itemView.getContext())
+        Glide.with(context)
                 .load(restaurant.getImageUrl())
-                .placeholder(R.drawable.placeholder_image) // Placeholder image
+                .placeholder(R.drawable.placeholder_image) // add a placeholder image in your drawable resources
                 .into(holder.restaurantImage);
+
+        holder.itemView.setOnClickListener(v -> onItemClickListener.onItemClick(restaurant));
     }
 
     @Override
@@ -60,7 +72,7 @@ public class RestaurantAdapter extends RecyclerView.Adapter<RestaurantAdapter.Re
             super(itemView);
             restaurantName = itemView.findViewById(R.id.restaurant_name);
             restaurantAddress = itemView.findViewById(R.id.restaurant_address);
-            restaurantImage = itemView.findViewById(R.id.restaurant_image); // Add ImageView
+            restaurantImage = itemView.findViewById(R.id.restaurant_image);
         }
     }
 }
