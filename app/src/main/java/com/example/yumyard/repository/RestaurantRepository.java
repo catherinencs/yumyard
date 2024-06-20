@@ -6,7 +6,6 @@ import com.example.yumyard.api.YelpApiService;
 import com.example.yumyard.api.YelpSearchResult;
 import com.example.yumyard.model.Restaurant;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,13 +53,13 @@ public class RestaurantRepository {
         yelpApiService = retrofit.create(YelpApiService.class);
     }
 
-    public void searchRestaurants(String location, String term, String price, final RestaurantListCallback callback) {
+    public void searchRestaurants(String location, String term, String price, String categories, final RestaurantListCallback callback) {
         String bearerToken = "Bearer QBGT8Eq52mLCSGJj0xr_5jXALbUtLaiko1mDijx68pCsT40634LbVSSQCuNdFulX9mkJJcG_avpRSzIeOfX4eXDnuRGVJ1EAv8eYvgUjgSmQWsZLddmeiFI0nkR0ZnYx"; // Replace with your Yelp API key
 
-        Log.d(TAG, "Querying Yelp API with Location: " + location + ", Term: " + term + ", Price: " + price);
+        Log.d(TAG, "Querying Yelp API with Location: " + location + ", Term: " + term + ", Price: " + price + ", Categories: " + categories);
 
         Call<YelpSearchResult> call = yelpApiService.searchBusinesses(
-                bearerToken, location, term, "best_match", 300, "restaurants", price.isEmpty() ? null : price);
+                bearerToken, location, term, "best_match", 300, categories.isEmpty() ? "restaurants" : categories, price.isEmpty() ? null : price);
 
         call.enqueue(new Callback<YelpSearchResult>() {
             @Override
