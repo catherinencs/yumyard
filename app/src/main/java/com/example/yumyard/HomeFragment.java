@@ -1,5 +1,6 @@
 package com.example.yumyard;
 
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class HomeFragment extends Fragment implements PriceRangeDialogFragment.PriceRangeSelectionListener, CuisineDialogFragment.CuisineSelectionListener {
+public class HomeFragment extends Fragment implements PriceRangeDialogFragment.PriceRangeSelectionListener, CuisineDialogFragment.CuisineSelectionListener, RestaurantAdapter.OnItemClickListener {
 
     private static final String TAG = "HomeFragment";
     private RecyclerView recyclerView;
@@ -52,7 +53,7 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         // Initialize components
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        restaurantAdapter = new RestaurantAdapter(new ArrayList<>());
+        restaurantAdapter = new RestaurantAdapter(getActivity(), new ArrayList<>(), this);
         recyclerView.setAdapter(restaurantAdapter);
         searchBar = view.findViewById(R.id.search_bar);
         locationPrompt = view.findViewById(R.id.location_prompt);
@@ -249,5 +250,12 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
             displayCuisines.setLength(displayCuisines.length() - 2); // Remove trailing comma and space
         }
         return displayCuisines.toString();
+    }
+
+    @Override
+    public void onItemClick(Restaurant restaurant) {
+        Intent intent = new Intent(getActivity(), RestaurantDetailActivity.class);
+        intent.putExtra("RESTAURANT_ID", restaurant.getRestaurantId());
+        startActivity(intent);
     }
 }

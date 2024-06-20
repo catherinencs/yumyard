@@ -1,5 +1,6 @@
 package com.example.yumyard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,7 +34,14 @@ public class FavoritesFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        restaurantAdapter = new RestaurantAdapter(new ArrayList<>());
+
+        restaurantAdapter = new RestaurantAdapter(getContext(), new ArrayList<>(), restaurant -> {
+            // Handle the item click to navigate to RestaurantDetailActivity
+            Intent intent = new Intent(getContext(), RestaurantDetailActivity.class);
+            intent.putExtra("RESTAURANT_ID", restaurant.getRestaurantId());
+            startActivity(intent);
+        });
+
         recyclerView.setAdapter(restaurantAdapter);
 
         userRepository = new UserRepository();

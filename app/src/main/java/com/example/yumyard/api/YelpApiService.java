@@ -3,6 +3,7 @@ package com.example.yumyard.api;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface YelpApiService {
@@ -15,5 +16,11 @@ public interface YelpApiService {
             @Query("radius") int radius,
             @Query("categories") String categories,
             @Query("price") String price // Add the price parameter here
+    );
+
+    @GET("businesses/{id}")
+    Call<YelpBusinessDetail> getBusinessDetails(
+            @Header("Authorization") String authHeader,
+            @Path("id") String id
     );
 }
