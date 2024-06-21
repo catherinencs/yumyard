@@ -48,18 +48,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp"
             android:gravity="center_vertical">
 
             <Button
                 android:id="@+id/heart_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:text="♥"
-                android:textSize="20sp"
-                android:textColor="@android:color/holo_red_light"
-                android:padding="8dp"/>
+                android:text="♡" />
 
             <Button
                 android:id="@+id/add_review_button"
@@ -67,6 +62,7 @@
                 android:layout_height="wrap_content"
                 android:text="Add a Review"
                 android:layout_marginStart="16dp"/>
+
         </LinearLayout>
 
         <TextView
@@ -77,6 +73,17 @@
             android:text="Reviews"
             android:textSize="18sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/no_reviews_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="No reviews yet"
+            android:visibility="gone"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/darker_gray" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/reviews_recycler_view"

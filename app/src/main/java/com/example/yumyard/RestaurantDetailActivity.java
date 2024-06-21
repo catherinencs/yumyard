@@ -2,6 +2,7 @@ package com.example.yumyard;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,18 +14,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.yumyard.adapter.ImagePagerAdapter;
+import com.example.yumyard.adapter.ReviewAdapter;
 import com.example.yumyard.api.YelpApiService;
 import com.example.yumyard.api.YelpBusinessDetail;
-import com.example.yumyard.adapter.ReviewAdapter;
 import com.example.yumyard.model.Review;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -48,6 +48,7 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private Button heartButton;
     private boolean isFavorite = false;
+    private TextView noReviewsTextView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -64,6 +65,7 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         reviewsRecyclerView = findViewById(R.id.reviews_recycler_view);
         Button addReviewButton = findViewById(R.id.add_review_button);
         heartButton = findViewById(R.id.heart_button);
+        noReviewsTextView = findViewById(R.id.no_reviews_text);
 
         reviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         reviewAdapter = new ReviewAdapter(new ArrayList<>());
@@ -132,8 +134,26 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     }
 
     private void fetchRestaurantReviews(String restaurantId) {
-        // Implement review fetching from your database
-        // Use the restaurantId to fetch reviews and update the reviewAdapter with the data.
+        db.collection("reviews")
+                .whereEqualTo("restaurantId", restaurantId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Review> reviews = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        Review review = document.toObject(Review.class);
+                        reviews.add(review);
+                    }
+
+                    if (reviews.isEmpty()) {
+                        noReviewsTextView.setVisibility(View.VISIBLE);
+                        reviewsRecyclerView.setVisibility(View.GONE);
+                    } else {
+                        noReviewsTextView.setVisibility(View.GONE);
+                        reviewsRecyclerView.setVisibility(View.VISIBLE);
+                        reviewAdapter.updateData(reviews);
+                    }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error fetching reviews", e));
     }
 
     private void showAddReviewDialog(String restaurantId) {

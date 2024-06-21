@@ -3,26 +3,30 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="8dp">
 
     <TextView
         android:id="@+id/usernameTextView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Username"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:text="Username" />
 
-    <TextView
-        android:id="@+id/ratingTextView"
-        android:layout_width="match_parent"
+    <RatingBar
+        android:id="@+id/ratingBar"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Rating"
-        android:paddingTop="4dp" />
+        android:numStars="5"
+        android:stepSize="0.5"
+        android:isIndicator="true"
+        style="?android:attr/ratingBarStyleSmall"
+        android:layout_marginTop="4dp"/>
 
     <TextView
         android:id="@+id/descriptionTextView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Review Description"
-        android:paddingTop="4dp" />
+        android:layout_marginTop="4dp"
+        android:text="Review description goes here" />
+
 </LinearLayout>
