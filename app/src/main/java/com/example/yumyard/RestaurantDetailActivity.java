@@ -2,7 +2,9 @@ package com.example.yumyard;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,12 +15,16 @@ import androidx.viewpager.widget.ViewPager;
 import com.example.yumyard.adapter.ImagePagerAdapter;
 import com.example.yumyard.api.YelpApiService;
 import com.example.yumyard.api.YelpBusinessDetail;
-import com.example.yumyard.model.Review;
 import com.example.yumyard.adapter.ReviewAdapter;
+import com.example.yumyard.model.Review;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -39,11 +45,16 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     private ViewPager imagePager;
     private RecyclerView reviewsRecyclerView;
     private ReviewAdapter reviewAdapter;
+    private FirebaseFirestore db;
+    private Button heartButton;
+    private boolean isFavorite = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_detail);
+
+        db = FirebaseFirestore.getInstance();
 
         restaurantName = findViewById(R.id.restaurant_name);
         restaurantAddress = findViewById(R.id.restaurant_address);
@@ -51,6 +62,8 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         restaurantPrice = findViewById(R.id.restaurant_price);
         imagePager = findViewById(R.id.image_pager);
         reviewsRecyclerView = findViewById(R.id.reviews_recycler_view);
+        Button addReviewButton = findViewById(R.id.add_review_button);
+        heartButton = findViewById(R.id.heart_button);
 
         reviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         reviewAdapter = new ReviewAdapter(new ArrayList<>());
@@ -61,9 +74,13 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         if (restaurantId != null) {
             fetchRestaurantDetails(restaurantId);
             fetchRestaurantReviews(restaurantId);
+            checkIfFavorite(restaurantId);
         } else {
             Log.e(TAG, "No restaurant ID provided.");
         }
+
+        addReviewButton.setOnClickListener(v -> showAddReviewDialog(restaurantId));
+        heartButton.setOnClickListener(v -> toggleFavoriteStatus(restaurantId));
     }
 
     private void fetchRestaurantDetails(String restaurantId) {
@@ -115,6 +132,100 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     }
 
     private void fetchRestaurantReviews(String restaurantId) {
-        // TODO: Implement review fetching from database
+        // Implement review fetching from your database
+        // Use the restaurantId to fetch reviews and update the reviewAdapter with the data.
+    }
+
+    private void showAddReviewDialog(String restaurantId) {
+        AddReviewDialogFragment dialog = new AddReviewDialogFragment();
+        dialog.setAddReviewListener((description, rating) -> {
+            // Handle review submission
+            if (rating < 1 || rating > 5) {
+                Toast.makeText(this, "Rating must be between 1 and 5", Toast.LENGTH_SHORT).show();
+            } else {
+                submitReview(restaurantId, description, rating);
+            }
+        });
+        dialog.show(getSupportFragmentManager(), "AddReviewDialogFragment");
+    }
+
+    private void submitReview(String restaurantId, String description, float rating) {
+        // Create a new review object
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        Review review = new Review();
+        review.setRestaurantId(restaurantId);
+        review.setUserId(userId);
+        review.setDescription(description);
+        review.setRating(rating);
+
+        // Save to Firestore
+        db.collection("reviews").add(review.toMap())
+                .addOnSuccessListener(documentReference -> {
+                    String reviewId = documentReference.getId(); // Get the generated review ID
+                    review.setReviewId(reviewId); // Set it to the review object
+
+                    // Update the review with the reviewId
+                    documentReference.update("reviewId", reviewId)
+                            .addOnSuccessListener(aVoid -> Log.d(TAG, "Review ID updated in the review document"))
+                            .addOnFailureListener(e -> Log.e(TAG, "Failed to update review ID in the review document", e));
+
+                    Log.d(TAG, "Review added with ID: " + reviewId);
+                    Toast.makeText(this, "Review added!", Toast.LENGTH_SHORT).show();
+                    // Refresh reviews list
+                    fetchRestaurantReviews(restaurantId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error adding review", e);
+                    Toast.makeText(this, "Failed to add review. Please try again.", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void toggleFavoriteStatus(String restaurantId) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        List<String> favoriteRestaurants = (List<String>) documentSnapshot.get("favoriteRestaurants");
+                        if (favoriteRestaurants == null) {
+                            favoriteRestaurants = new ArrayList<>();
+                        }
+                        if (isFavorite) {
+                            favoriteRestaurants.remove(restaurantId);
+                            heartButton.setText("♡");
+                            isFavorite = false;
+                        } else {
+                            favoriteRestaurants.add(restaurantId);
+                            heartButton.setText("♥");
+                            isFavorite = true;
+                        }
+                        db.collection("users").document(userId)
+                                .update("favoriteRestaurants", favoriteRestaurants)
+                                .addOnSuccessListener(aVoid -> {
+                                    String message = isFavorite ? "Added to favorites" : "Removed from favorites";
+                                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> Log.e(TAG, "Error updating favorites", e));
+                    }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error fetching user data", e));
+    }
+
+    private void checkIfFavorite(String restaurantId) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        List<String> favoriteRestaurants = (List<String>) documentSnapshot.get("favoriteRestaurants");
+                        if (favoriteRestaurants != null && favoriteRestaurants.contains(restaurantId)) {
+                            heartButton.setText("♥");
+                            isFavorite = true;
+                        } else {
+                            heartButton.setText("♡");
+                            isFavorite = false;
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Error checking if favorite", e));
     }
 }
