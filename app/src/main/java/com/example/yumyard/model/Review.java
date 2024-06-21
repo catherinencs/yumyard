@@ -9,19 +9,17 @@ public class Review {
     private String restaurantId;
     private double rating;
     private String description;
-    private String username;
 
     public Review() {
         // Default constructor required for calls to DataSnapshot.getValue(Review.class)
     }
 
-    public Review(String reviewId, String userId, String restaurantId, double rating, String description, String username) {
+    public Review(String reviewId, String userId, String restaurantId, double rating, String description) {
         this.reviewId = reviewId;
         this.userId = userId;
         this.restaurantId = restaurantId;
         this.rating = rating;
         this.description = description;
-        this.username = username;
     }
 
     public String getReviewId() {
@@ -64,14 +62,6 @@ public class Review {
         this.description = description;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
         result.put("reviewId", reviewId);
@@ -79,7 +69,6 @@ public class Review {
         result.put("restaurantId", restaurantId);
         result.put("rating", rating);
         result.put("description", description);
-        result.put("username", username);
         return result;
     }
 }
