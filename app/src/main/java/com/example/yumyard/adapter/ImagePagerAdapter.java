@@ -40,7 +40,7 @@ public class ImagePagerAdapter extends PagerAdapter {
 
         Glide.with(context)
                 .load(imageUrls.get(position))
-                .placeholder(R.drawable.placeholder_image) // add a placeholder image in your drawable resources
+                .placeholder(R.drawable.placeholder_image) // Add a placeholder image in your drawable resources
                 .into(imageView);
 
         container.addView(view);

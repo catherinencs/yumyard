@@ -15,7 +15,7 @@ public interface YelpApiService {
             @Query("sort_by") String sortBy,
             @Query("radius") int radius,
             @Query("categories") String categories,
-            @Query("price") String price // Add the price parameter here
+            @Query("price") String price
     );
 
     @GET("businesses/{id}")

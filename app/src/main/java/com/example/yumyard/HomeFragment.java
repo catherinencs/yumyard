@@ -1,7 +1,6 @@
 package com.example.yumyard;
 
 import android.content.Intent;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,11 +10,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.yumyard.adapter.RestaurantAdapter;
 import com.example.yumyard.model.Restaurant;
 import com.example.yumyard.repository.RestaurantRepository;
@@ -256,6 +257,7 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
     public void onItemClick(Restaurant restaurant) {
         Intent intent = new Intent(getActivity(), RestaurantDetailActivity.class);
         intent.putExtra("RESTAURANT_ID", restaurant.getRestaurantId());
+        intent.putExtra("RESTAURANT_IMAGE_URL", restaurant.getImageUrl()); // Pass image URL
         startActivity(intent);
     }
 }

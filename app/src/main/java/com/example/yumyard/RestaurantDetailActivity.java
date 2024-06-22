@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -11,9 +13,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
 
-import com.example.yumyard.adapter.ImagePagerAdapter;
+import com.bumptech.glide.Glide;
 import com.example.yumyard.adapter.ReviewAdapter;
 import com.example.yumyard.api.YelpApiService;
 import com.example.yumyard.api.YelpBusinessDetail;
@@ -24,6 +25,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -39,10 +41,14 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     private static final String TAG = "RestaurantDetailActivity";
     private YelpApiService yelpApiService;
     private TextView restaurantName;
+    private TextView restaurantAvgRating;
     private TextView restaurantAddress;
     private TextView restaurantPhone;
     private TextView restaurantPrice;
-    private ViewPager imagePager;
+    private TextView restaurantHours; // TextView for today's hours
+    private Button expandHoursButton; // Button to expand/collapse hours
+    private LinearLayout allHoursLayout; // Layout for all hours
+    private ImageView restaurantImage;
     private RecyclerView reviewsRecyclerView;
     private ReviewAdapter reviewAdapter;
     private FirebaseFirestore db;
@@ -58,10 +64,14 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         restaurantName = findViewById(R.id.restaurant_name);
+        restaurantAvgRating = findViewById(R.id.restaurant_avg_rating); // Reference to average rating TextView
         restaurantAddress = findViewById(R.id.restaurant_address);
         restaurantPhone = findViewById(R.id.restaurant_phone);
         restaurantPrice = findViewById(R.id.restaurant_price);
-        imagePager = findViewById(R.id.image_pager);
+        restaurantHours = findViewById(R.id.restaurant_hours); // Reference to today's hours TextView
+        expandHoursButton = findViewById(R.id.expand_hours_button); // Reference to the expand button
+        allHoursLayout = findViewById(R.id.all_hours_layout); // Reference to the all hours layout
+        restaurantImage = findViewById(R.id.restaurant_image);
         reviewsRecyclerView = findViewById(R.id.reviews_recycler_view);
         Button addReviewButton = findViewById(R.id.add_review_button);
         heartButton = findViewById(R.id.heart_button);
@@ -72,9 +82,19 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         reviewsRecyclerView.setAdapter(reviewAdapter);
 
         String restaurantId = getIntent().getStringExtra("RESTAURANT_ID");
+        String imageUrl = getIntent().getStringExtra("RESTAURANT_IMAGE_URL");
 
         if (restaurantId != null) {
             fetchRestaurantDetails(restaurantId);
+
+            // Load the image URL into ImageView
+            if (imageUrl != null) {
+                Glide.with(this)
+                        .load(imageUrl)
+                        .placeholder(R.drawable.placeholder_image) // Add a placeholder image
+                        .into(restaurantImage);
+            }
+
             fetchRestaurantReviews(restaurantId);
             checkIfFavorite(restaurantId);
         } else {
@@ -83,6 +103,8 @@ public class RestaurantDetailActivity extends AppCompatActivity {
 
         addReviewButton.setOnClickListener(v -> showAddReviewDialog(restaurantId));
         heartButton.setOnClickListener(v -> toggleFavoriteStatus(restaurantId));
+
+        expandHoursButton.setOnClickListener(v -> toggleHoursVisibility());
     }
 
     private void fetchRestaurantDetails(String restaurantId) {
@@ -101,10 +123,10 @@ public class RestaurantDetailActivity extends AppCompatActivity {
 
         yelpApiService = retrofit.create(YelpApiService.class);
 
-        String bearerToken = "Bearer QBGT8Eq52mLCSGJj0xr_5jXALbUtLaiko1mDijx68pCsT40634LbVSSQCuNdFulX9mkJJcG_avpRSzIeOfX4eXDnuRGVJ1EAv8eYvgUjgSmQWsZLddmeiFI0nkR0ZnYx"; // Replace with your Yelp API key
+        String bearerToken = "Bearer QBGT8Eq52mLCSGJj0xr_5jXALbUtLaiko1mDijx68pCsT40634LbVSSQCuNdFulX9mkJJcG_avpRSzIeOfX4eXDnuRGVJ1EAv8eYvgUjgSmQWsZLddmeiFI0nkR0ZnYx";
 
-        Call<YelpBusinessDetail> call = yelpApiService.getBusinessDetails(bearerToken, restaurantId);
-        call.enqueue(new Callback<YelpBusinessDetail>() {
+        Call<YelpBusinessDetail> detailCall = yelpApiService.getBusinessDetails(bearerToken, restaurantId);
+        detailCall.enqueue(new Callback<YelpBusinessDetail>() {
             @Override
             public void onResponse(Call<YelpBusinessDetail> call, Response<YelpBusinessDetail> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -112,10 +134,33 @@ public class RestaurantDetailActivity extends AppCompatActivity {
                     restaurantName.setText(businessDetail.getName());
                     restaurantAddress.setText(businessDetail.getLocation().getAddress1());
                     restaurantPhone.setText(businessDetail.getPhone());
-                    restaurantPrice.setText(businessDetail.getPrice());
+                    restaurantPrice.setText(businessDetail.getPrice() != null ? businessDetail.getPrice() : "N/A");
 
-                    ImagePagerAdapter adapter = new ImagePagerAdapter(RestaurantDetailActivity.this, businessDetail.getPhotos());
-                    imagePager.setAdapter(adapter);
+                    // Display today's hours and prepare expandable hours
+                    if (businessDetail.getHours() != null && !businessDetail.getHours().isEmpty()) {
+                        YelpBusinessDetail.Hour hour = businessDetail.getHours().get(0);
+                        int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1; // Calendar Sunday=1, so adjust by -1
+                        StringBuilder todayHours = new StringBuilder();
+                        StringBuilder allHours = new StringBuilder();
+
+                        for (YelpBusinessDetail.Hour.Open openHour : hour.getOpen()) {
+                            String formattedHours = formatDay(openHour.getDay())
+                                    + ": "
+                                    + formatTime(openHour.getStart())
+                                    + " - "
+                                    + formatTime(openHour.getEnd());
+
+                            if (openHour.getDay() == today) {
+                                todayHours.append(formattedHours);
+                            }
+
+                            allHours.append(formattedHours).append("\n");
+                        }
+                        restaurantHours.setText(todayHours.toString().trim());
+                        displayAllHours(allHours.toString().trim());
+                    } else {
+                        restaurantHours.setText("Hours not available.");
+                    }
                 } else {
                     try {
                         String errorResponse = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
@@ -133,24 +178,67 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         });
     }
 
+    // Helper method to format day
+    private String formatDay(int day) {
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        return days[day % 7];
+    }
+
+    // Helper method to format time
+    private String formatTime(String time) {
+        if (time.length() != 4) return time;
+        return time.substring(0, 2) + ":" + time.substring(2);
+    }
+
+    // Display all hours in the expandable layout
+    private void displayAllHours(String hoursText) {
+        String[] hoursArray = hoursText.split("\n");
+        allHoursLayout.removeAllViews();
+        for (String hour : hoursArray) {
+            TextView hourView = new TextView(this);
+            hourView.setText(hour);
+            hourView.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            allHoursLayout.addView(hourView);
+        }
+    }
+
+    // Toggle visibility of the all hours layout
+    private void toggleHoursVisibility() {
+        if (allHoursLayout.getVisibility() == View.VISIBLE) {
+            allHoursLayout.setVisibility(View.GONE);
+            expandHoursButton.setText(">");
+        } else {
+            allHoursLayout.setVisibility(View.VISIBLE);
+            expandHoursButton.setText("v");
+        }
+    }
+
     private void fetchRestaurantReviews(String restaurantId) {
         db.collection("reviews")
                 .whereEqualTo("restaurantId", restaurantId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Review> reviews = new ArrayList<>();
+                    double sumRating = 0;
+
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Review review = document.toObject(Review.class);
                         reviews.add(review);
+                        sumRating += review.getRating();
                     }
 
                     if (reviews.isEmpty()) {
                         noReviewsTextView.setVisibility(View.VISIBLE);
                         reviewsRecyclerView.setVisibility(View.GONE);
+                        restaurantAvgRating.setText("No ratings yet");
                     } else {
                         noReviewsTextView.setVisibility(View.GONE);
                         reviewsRecyclerView.setVisibility(View.VISIBLE);
                         reviewAdapter.updateData(reviews);
+
+                        // Calculate average rating
+                        double averageRating = sumRating / reviews.size();
+                        restaurantAvgRating.setText(String.format("Average Rating: %.1f", averageRating));
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error fetching reviews", e));
