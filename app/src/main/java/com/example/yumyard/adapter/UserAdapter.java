@@ -29,6 +29,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         User user = users.get(position);
+        holder.rankTextView.setText(String.valueOf(position + 1)); // Display rank
         holder.usernameTextView.setText(user.getUsername());
         holder.reviewCountTextView.setText(String.valueOf(user.getReviewCount()));
     }
@@ -44,11 +45,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
+        TextView rankTextView;
         TextView usernameTextView;
         TextView reviewCountTextView;
 
         UserViewHolder(@NonNull View itemView) {
             super(itemView);
+            rankTextView = itemView.findViewById(R.id.rankTextView);
             usernameTextView = itemView.findViewById(R.id.usernameTextView);
             reviewCountTextView = itemView.findViewById(R.id.reviewCountTextView);
         }

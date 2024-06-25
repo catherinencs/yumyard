@@ -1,5 +1,7 @@
 package com.example.yumyard.model;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,8 @@ public class Restaurant {
         this.reviewCount = reviewCount;
         this.averageRating = averageRating;
     }
+
+    // Getters and setters...
 
     public String getRestaurantId() {
         return restaurantId;
@@ -81,5 +85,26 @@ public class Restaurant {
         result.put("reviewCount", reviewCount);
         result.put("averageRating", averageRating);
         return result;
+    }
+
+    // Fetch review count
+    public static void fetchReviewCount(String restaurantId, FetchReviewCountCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("reviews")
+                .whereEqualTo("restaurantId", restaurantId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot querySnapshot = task.getResult();
+                        int reviewCount = querySnapshot != null ? querySnapshot.size() : 0;
+                        callback.onFetch(reviewCount);
+                    } else {
+                        callback.onFetch(0);
+                    }
+                });
+    }
+
+    public interface FetchReviewCountCallback {
+        void onFetch(int count);
     }
 }

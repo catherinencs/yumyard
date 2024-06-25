@@ -6,16 +6,50 @@
     android:padding="16dp">
 
     <TextView
+        android:id="@+id/settingsTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp"
+        android:textAlignment="center" />
+
+    <TextView
+        android:id="@+id/profileSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Profile"
+        android:textSize="20sp"
+        android:paddingBottom="16dp"
+        android:textAlignment="viewStart"
+        android:paddingTop="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Email"
+        android:textStyle="bold"
+        android:paddingTop="8dp" />
+
+    <TextView
         android:id="@+id/emailTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Email" />
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Username"
+        android:textStyle="bold"
+        android:paddingTop="8dp" />
 
     <TextView
         android:id="@+id/usernameTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Username" />
+        android:paddingBottom="8dp" />
 
     <Button
         android:id="@+id/changeUsernameButton"
@@ -24,9 +58,14 @@
         android:text="Change Username" />
 
     <TextView
+        android:id="@+id/themeSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="App Theme" />
+        android:text="App Theme"
+        android:textSize="20sp"
+        android:paddingBottom="16dp"
+        android:textAlignment="viewStart"
+        android:paddingTop="32dp"/>
 
     <Switch
         android:id="@+id/darkModeSwitch"

@@ -1,7 +1,9 @@
 package com.example.yumyard;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,7 +42,7 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
     private RestaurantRepository restaurantRepository;
     private EditText searchBar;
     private TextView locationPrompt;
-    private Button currentLocationButton, sortByButton, priceRangeButton, cuisineButton;
+    private Button priceRangeButton, cuisineButton;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private String selectedLocation;
     private String selectedPriceRange = ""; // To store the selected price range
@@ -58,8 +60,6 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         recyclerView.setAdapter(restaurantAdapter);
         searchBar = view.findViewById(R.id.search_bar);
         locationPrompt = view.findViewById(R.id.location_prompt);
-        currentLocationButton = view.findViewById(R.id.current_location_button);
-        sortByButton = view.findViewById(R.id.sort_by_button);
         priceRangeButton = view.findViewById(R.id.price_range_button);
         cuisineButton = view.findViewById(R.id.cuisine_button);
 
@@ -85,6 +85,10 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
                 locationPrompt.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
                 searchRestaurants(selectedLocation, searchBar.getText().toString());
+
+                // Save selected location to SharedPreferences
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                prefs.edit().putString("HOME_LOCATION", selectedLocation).apply();
             }
 
             @Override
@@ -92,9 +96,6 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
                 Log.e(TAG, "An error occurred: " + status);
             }
         });
-
-        // Use current location button
-        currentLocationButton.setOnClickListener(v -> getCurrentLocation());
 
         // Price range button functionality
         priceRangeButton.setOnClickListener(v -> showPriceRangeDialog());
@@ -114,21 +115,6 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         });
 
         return view;
-    }
-
-    private void getCurrentLocation() {
-        fusedLocationProviderClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), location -> {
-                    if (location != null) {
-                        selectedLocation = location.getLatitude() + "," + location.getLongitude();
-                        Log.d(TAG, "Current Location: " + selectedLocation);
-                        locationPrompt.setVisibility(View.GONE);
-                        recyclerView.setVisibility(View.VISIBLE);
-                        searchRestaurants(selectedLocation, searchBar.getText().toString());
-                    } else {
-                        Toast.makeText(getActivity(), "Unable to get current location.", Toast.LENGTH_SHORT).show();
-                    }
-                });
     }
 
     private void searchRestaurants(String location, String term) {
@@ -229,22 +215,31 @@ public class HomeFragment extends Fragment implements PriceRangeDialogFragment.P
         // Convert the categories to a displayable string
         StringBuilder displayCuisines = new StringBuilder();
         for (String cuisine : cuisines.split(",")) {
-            if (cuisine.equals("newamerican")) {
-                displayCuisines.append("American, ");
-            } else if (cuisine.equals("chinese")) {
-                displayCuisines.append("Chinese, ");
-            } else if (cuisine.equals("japanese")) {
-                displayCuisines.append("Japanese, ");
-            } else if (cuisine.equals("korean")) {
-                displayCuisines.append("Korean, ");
-            } else if (cuisine.equals("indpak")) {
-                displayCuisines.append("Indian, ");
-            } else if (cuisine.equals("mexican")) {
-                displayCuisines.append("Mexican, ");
-            } else if (cuisine.equals("mediterranean")) {
-                displayCuisines.append("Mediterranean, ");
-            } else if (cuisine.equals("italian")) {
-                displayCuisines.append("Italian, ");
+            switch (cuisine) {
+                case "newamerican":
+                    displayCuisines.append("American, ");
+                    break;
+                case "chinese":
+                    displayCuisines.append("Chinese, ");
+                    break;
+                case "japanese":
+                    displayCuisines.append("Japanese, ");
+                    break;
+                case "korean":
+                    displayCuisines.append("Korean, ");
+                    break;
+                case "indpak":
+                    displayCuisines.append("Indian, ");
+                    break;
+                case "mexican":
+                    displayCuisines.append("Mexican, ");
+                    break;
+                case "mediterranean":
+                    displayCuisines.append("Mediterranean, ");
+                    break;
+                case "italian":
+                    displayCuisines.append("Italian, ");
+                    break;
             }
         }
         if (displayCuisines.length() > 0) {

@@ -36,7 +36,8 @@
         </activity>
         <activity android:name=".RegisterActivity" />
         <activity android:name=".MainActivity" />
-        <activity android:name=".RestaurantDetailActivity" /> <!-- Add this line -->
+        <activity android:name=".RestaurantDetailActivity" />
+        <activity android:name=".DirectionsActivity"/>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

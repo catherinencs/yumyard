@@ -20,6 +20,11 @@ public class UserRepository {
         void onFailure(Exception e);
     }
 
+    public interface UsernameCheckCallback {
+        void onResult(boolean isTaken);
+        void onFailure(Exception e);
+    }
+
     public void getUser(String userId, final UserCallback callback) {
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -45,17 +50,30 @@ public class UserRepository {
                 .addOnFailureListener(callback::onFailure);
     }
 
-    // Add the updateUsername method
+    public void isUsernameTaken(String username, final UsernameCheckCallback callback) {
+        db.collection("users").whereEqualTo("username", username).get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    boolean isTaken = !queryDocumentSnapshots.isEmpty();
+                    callback.onResult(isTaken);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public void updateUsername(String userId, String newUsername, final UserCallback callback) {
         db.collection("users").document(userId).update("username", newUsername)
                 .addOnSuccessListener(aVoid -> getUser(userId, callback))
                 .addOnFailureListener(callback::onFailure);
     }
 
-    // Add the updateDarkMode method
     public void updateDarkMode(String userId, boolean isEnabled, final UserCallback callback) {
         db.collection("users").document(userId).update("darkMode", isEnabled)
                 .addOnSuccessListener(aVoid -> getUser(userId, callback))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    public void updateUser(User user, final UserCallback callback) {
+        db.collection("users").document(user.getUserId()).set(user)
+                .addOnSuccessListener(aVoid -> callback.onSuccess(user))
                 .addOnFailureListener(callback::onFailure);
     }
 }

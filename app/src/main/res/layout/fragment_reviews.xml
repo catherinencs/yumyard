@@ -5,6 +5,17 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Title for the reviews page -->
+    <TextView
+        android:id="@+id/reviews_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your Reviews"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="16dp"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"

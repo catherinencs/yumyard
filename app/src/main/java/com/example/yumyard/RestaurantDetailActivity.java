@@ -1,5 +1,6 @@
 package com.example.yumyard;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,10 +19,12 @@ import com.bumptech.glide.Glide;
 import com.example.yumyard.adapter.ReviewAdapter;
 import com.example.yumyard.api.YelpApiService;
 import com.example.yumyard.api.YelpBusinessDetail;
+import com.example.yumyard.model.Restaurant;
 import com.example.yumyard.model.Review;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,6 +49,7 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     private TextView restaurantPhone;
     private TextView restaurantPrice;
     private TextView restaurantHours; // TextView for today's hours
+    private TextView reviewCountTextView; // TextView for review count
     private Button expandHoursButton; // Button to expand/collapse hours
     private LinearLayout allHoursLayout; // Layout for all hours
     private ImageView restaurantImage;
@@ -55,6 +59,7 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     private Button heartButton;
     private boolean isFavorite = false;
     private TextView noReviewsTextView;
+    private LatLng restaurantCoordinates;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,6 +81,8 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         Button addReviewButton = findViewById(R.id.add_review_button);
         heartButton = findViewById(R.id.heart_button);
         noReviewsTextView = findViewById(R.id.no_reviews_text);
+        reviewCountTextView = findViewById(R.id.review_count); // Reference to review count TextView
+        Button getDirectionsButton = findViewById(R.id.get_directions_button);
 
         reviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         reviewAdapter = new ReviewAdapter(new ArrayList<>());
@@ -103,8 +110,12 @@ public class RestaurantDetailActivity extends AppCompatActivity {
 
         addReviewButton.setOnClickListener(v -> showAddReviewDialog(restaurantId));
         heartButton.setOnClickListener(v -> toggleFavoriteStatus(restaurantId));
+        getDirectionsButton.setOnClickListener(v -> openDirectionsActivity(restaurantId)); // Handle Get Directions button click
 
         expandHoursButton.setOnClickListener(v -> toggleHoursVisibility());
+
+        // Fetch and display review count
+        Restaurant.fetchReviewCount(restaurantId, count -> reviewCountTextView.setText(" (" + count + ")"));
     }
 
     private void fetchRestaurantDetails(String restaurantId) {
@@ -135,6 +146,9 @@ public class RestaurantDetailActivity extends AppCompatActivity {
                     restaurantAddress.setText(businessDetail.getLocation().getAddress1());
                     restaurantPhone.setText(businessDetail.getPhone());
                     restaurantPrice.setText(businessDetail.getPrice() != null ? businessDetail.getPrice() : "N/A");
+                    double latitude = businessDetail.getCoordinates().getLatitude();
+                    double longitude = businessDetail.getCoordinates().getLongitude();
+                    restaurantCoordinates = new LatLng(latitude, longitude);
 
                     // Display today's hours and prepare expandable hours
                     if (businessDetail.getHours() != null && !businessDetail.getHours().isEmpty()) {
@@ -231,14 +245,15 @@ public class RestaurantDetailActivity extends AppCompatActivity {
                         noReviewsTextView.setVisibility(View.VISIBLE);
                         reviewsRecyclerView.setVisibility(View.GONE);
                         restaurantAvgRating.setText("No ratings yet");
+                        reviewCountTextView.setText("(0)");
                     } else {
                         noReviewsTextView.setVisibility(View.GONE);
                         reviewsRecyclerView.setVisibility(View.VISIBLE);
                         reviewAdapter.updateData(reviews);
 
-                        // Calculate average rating
                         double averageRating = sumRating / reviews.size();
                         restaurantAvgRating.setText(String.format("Average Rating: %.1f", averageRating));
+                        reviewCountTextView.setText(String.format("(%d)", reviews.size())); // Update review count
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error fetching reviews", e));
@@ -247,7 +262,6 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     private void showAddReviewDialog(String restaurantId) {
         AddReviewDialogFragment dialog = new AddReviewDialogFragment();
         dialog.setAddReviewListener((description, rating) -> {
-            // Handle review submission
             if (rating < 1 || rating > 5) {
                 Toast.makeText(this, "Rating must be between 1 and 5", Toast.LENGTH_SHORT).show();
             } else {
@@ -258,7 +272,6 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     }
 
     private void submitReview(String restaurantId, String description, float rating) {
-        // Create a new review object
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         Review review = new Review();
@@ -267,21 +280,18 @@ public class RestaurantDetailActivity extends AppCompatActivity {
         review.setDescription(description);
         review.setRating(rating);
 
-        // Save to Firestore
         db.collection("reviews").add(review.toMap())
                 .addOnSuccessListener(documentReference -> {
-                    String reviewId = documentReference.getId(); // Get the generated review ID
-                    review.setReviewId(reviewId); // Set it to the review object
+                    String reviewId = documentReference.getId();
+                    review.setReviewId(reviewId);
 
-                    // Update the review with the reviewId
                     documentReference.update("reviewId", reviewId)
                             .addOnSuccessListener(aVoid -> Log.d(TAG, "Review ID updated in the review document"))
                             .addOnFailureListener(e -> Log.e(TAG, "Failed to update review ID in the review document", e));
 
                     Log.d(TAG, "Review added with ID: " + reviewId);
                     Toast.makeText(this, "Review added!", Toast.LENGTH_SHORT).show();
-                    // Refresh reviews list
-                    fetchRestaurantReviews(restaurantId);
+                    fetchRestaurantReviews(restaurantId); // Refresh reviews list
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error adding review", e);
@@ -335,5 +345,16 @@ public class RestaurantDetailActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error checking if favorite", e));
+    }
+
+    private void openDirectionsActivity(String restaurantId) {
+        Intent intent = new Intent(this, DirectionsActivity.class);
+        intent.putExtra("RESTAURANT_ID", restaurantId);
+        intent.putExtra("RESTAURANT_ADDRESS", restaurantAddress.getText().toString());
+        if (restaurantCoordinates != null) {
+            intent.putExtra("RESTAURANT_LAT", restaurantCoordinates.latitude);
+            intent.putExtra("RESTAURANT_LNG", restaurantCoordinates.longitude);
+        }
+        startActivity(intent);
     }
 }

@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.google.gms.google-services") // Add this here
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -66,6 +66,14 @@ dependencies {
 
     implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
     implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
+
+
+    implementation ("androidx.preference:preference:1.2.0")
+    implementation ("com.google.maps.android:android-maps-utils:2.3.0")
+    implementation("com.google.maps:google-maps-services:2.2.0")
+
+    implementation ("androidx.constraintlayout:constraintlayout:2.0.4")
+    implementation ("com.google.firebase:firebase-messaging:23.0.0")
 }
 
 // Apply the google-services plugin

@@ -10,6 +10,7 @@ public class YelpBusinessDetail {
     private List<String> photos;
     private Location location;
     private List<Hour> hours;
+    private Coordinates coordinates; // Add coordinates field
 
     // Getters and setters
 
@@ -67,6 +68,14 @@ public class YelpBusinessDetail {
 
     public void setHours(List<Hour> hours) {
         this.hours = hours;
+    }
+
+    public Coordinates getCoordinates() {
+        return coordinates;
+    }
+
+    public void setCoordinates(Coordinates coordinates) {
+        this.coordinates = coordinates;
     }
 
     public static class Location {
@@ -198,6 +207,29 @@ public class YelpBusinessDetail {
             public void setDay(int day) {
                 this.day = day;
             }
+        }
+    }
+
+    public static class Coordinates {
+        private double latitude;
+        private double longitude;
+
+        // Getters and setters
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(double latitude) {
+            this.latitude = latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(double longitude) {
+            this.longitude = longitude;
         }
     }
 }

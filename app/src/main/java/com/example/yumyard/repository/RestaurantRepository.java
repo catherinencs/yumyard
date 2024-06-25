@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.example.yumyard.api.YelpApiService;
 import com.example.yumyard.api.YelpSearchResult;
+import com.example.yumyard.api.YelpBusinessDetail;
 import com.example.yumyard.model.Restaurant;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -96,52 +97,37 @@ public class RestaurantRepository {
         });
     }
 
-    // Fetch restaurant details from Firestore
-    public void getRestaurant(String restaurantId, final RestaurantCallback callback) {
-        db.collection("restaurants").document(restaurantId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        Restaurant restaurant = documentSnapshot.toObject(Restaurant.class);
-                        callback.onSuccess(restaurant);
-                    } else {
-                        callback.onFailure(new Exception("Restaurant not found"));
+    public void getRestaurantDetailsFromYelp(String restaurantId, final RestaurantCallback callback) {
+        String bearerToken = "Bearer QBGT8Eq52mLCSGJj0xr_5jXALbUtLaiko1mDijx68pCsT40634LbVSSQCuNdFulX9mkJJcG_avpRSzIeOfX4eXDnuRGVJ1EAv8eYvgUjgSmQWsZLddmeiFI0nkR0ZnYx";
+
+        Call<YelpBusinessDetail> call = yelpApiService.getBusinessDetails(bearerToken, restaurantId);
+        call.enqueue(new Callback<YelpBusinessDetail>() {
+            @Override
+            public void onResponse(Call<YelpBusinessDetail> call, Response<YelpBusinessDetail> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    YelpBusinessDetail businessDetail = response.body();
+                    Restaurant restaurant = new Restaurant();
+                    restaurant.setRestaurantId(businessDetail.getId());
+                    restaurant.setName(businessDetail.getName());
+                    restaurant.setAddress(businessDetail.getLocation().getAddress1());
+                    callback.onSuccess(restaurant);
+                } else {
+                    try {
+                        String errorResponse = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
+                        Log.e(TAG, "Yelp API response error: " + errorResponse);
+                        callback.onFailure(new Exception("Yelp API call failed: " + errorResponse));
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error reading error response", e);
+                        callback.onFailure(new Exception("Yelp API call failed: Unable to read error response"));
                     }
-                })
-                .addOnFailureListener(callback::onFailure);
-    }
+                }
+            }
 
-    // Fetch favorite restaurants from Firestore
-    public void fetchFavorites(String userId, final RestaurantListCallback callback) {
-        db.collection("users").document(userId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        List<String> favoriteIds = (List<String>) documentSnapshot.get("favoriteRestaurants");
-                        if (favoriteIds == null || favoriteIds.isEmpty()) {
-                            callback.onSuccess(new ArrayList<>());
-                            return;
-                        }
-
-                        List<Restaurant> favoriteRestaurants = new ArrayList<>();
-                        for (String restaurantId : favoriteIds) {
-                            getRestaurant(restaurantId, new RestaurantCallback() {
-                                @Override
-                                public void onSuccess(Restaurant restaurant) {
-                                    favoriteRestaurants.add(restaurant);
-                                    if (favoriteRestaurants.size() == favoriteIds.size()) {
-                                        callback.onSuccess(favoriteRestaurants);
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Exception e) {
-                                    Log.e(TAG, "Failed to get favorite restaurant details", e);
-                                }
-                            });
-                        }
-                    } else {
-                        callback.onFailure(new Exception("User not found"));
-                    }
-                })
-                .addOnFailureListener(callback::onFailure);
+            @Override
+            public void onFailure(Call<YelpBusinessDetail> call, Throwable t) {
+                Log.e(TAG, "Error fetching restaurant details from Yelp", t);
+                callback.onFailure(new Exception("Error fetching restaurant details from Yelp", t));
+            }
+        });
     }
 }

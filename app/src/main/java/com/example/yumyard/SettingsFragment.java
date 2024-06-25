@@ -1,5 +1,7 @@
 package com.example.yumyard;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,9 +10,12 @@ import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
+
 import com.example.yumyard.model.User;
 import com.example.yumyard.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,7 +40,7 @@ public class SettingsFragment extends Fragment {
         userRepository = new UserRepository();
         loadUserProfile();
 
-        changeUsernameButton.setOnClickListener(v -> changeUsername());
+        changeUsernameButton.setOnClickListener(v -> showChangeUsernameDialog());
         darkModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleDarkMode(isChecked));
 
         return view;
@@ -58,25 +63,10 @@ public class SettingsFragment extends Fragment {
         });
     }
 
-    private void changeUsername() {
-        String newUsername = usernameTextView.getText().toString();
-        if (newUsername.isEmpty()) {
-            Toast.makeText(getActivity(), "Username cannot be empty", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        userRepository.updateUsername(userId, newUsername, new UserRepository.UserCallback() {
-            @Override
-            public void onSuccess(User user) {
-                Toast.makeText(getActivity(), "Username updated successfully", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Toast.makeText(getActivity(), "Username update failed", Toast.LENGTH_SHORT).show();
-            }
-        });
+    private void showChangeUsernameDialog() {
+        ChangeUsernameDialogFragment dialogFragment = new ChangeUsernameDialogFragment();
+        dialogFragment.setTargetFragment(SettingsFragment.this, 0);
+        dialogFragment.show(getParentFragmentManager(), "ChangeUsernameDialogFragment");
     }
 
     private void toggleDarkMode(boolean isEnabled) {
@@ -85,7 +75,14 @@ public class SettingsFragment extends Fragment {
         userRepository.updateDarkMode(userId, isEnabled, new UserRepository.UserCallback() {
             @Override
             public void onSuccess(User user) {
-                // Apply dark mode change to the app (not shown here)
+                // Apply dark mode change to the app
+                AppCompatDelegate.setDefaultNightMode(isEnabled ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+
+                // Save preference locally
+                SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_preferences", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean("dark_mode", isEnabled);
+                editor.apply();
             }
 
             @Override
@@ -93,5 +90,11 @@ public class SettingsFragment extends Fragment {
                 // Handle error
             }
         });
+    }
+
+    public void updateUsernameInView(String newUsername) {
+        if (usernameTextView != null) {
+            usernameTextView.setText(newUsername);
+        }
     }
 }

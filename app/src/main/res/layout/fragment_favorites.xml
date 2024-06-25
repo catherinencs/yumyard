@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,16 +5,18 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/emptyFavoritesTextView"
+        android:id="@+id/favoritesTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="You have no favorite restaurants"
-        android:visibility="gone" />
+        android:text="Favorites"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp"
+        android:textAlignment="center" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingTop="16dp" />
+        android:layout_height="match_parent" />
+
 </LinearLayout>

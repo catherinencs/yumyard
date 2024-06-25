@@ -18,36 +18,19 @@
         android:hint="Search for restaurants"
         android:padding="10dp"/>
 
-    <Button
-        android:id="@+id/current_location_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/search_bar"
-        android:layout_marginTop="10dp"
-        android:layout_alignParentStart="true"
-        android:padding="10dp"
-        android:text="Use Current Location"/>
-
     <LinearLayout
         android:id="@+id/button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/current_location_button"
+        android:layout_below="@id/search_bar"
         android:orientation="horizontal"
         android:gravity="center"
         android:layout_marginTop="10dp">
 
         <Button
-            android:id="@+id/sort_by_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sort by"/>
-
-        <Button
             android:id="@+id/price_range_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
             android:text="Price Range"/>
 
         <Button

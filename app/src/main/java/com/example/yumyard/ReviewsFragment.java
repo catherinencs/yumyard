@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.yumyard.adapter.ReviewAdapter;
+import com.example.yumyard.adapter.UserReviewAdapter;
 import com.example.yumyard.model.Review;
 import com.example.yumyard.repository.ReviewRepository;
 import com.google.firebase.auth.FirebaseAuth;
@@ -20,7 +20,7 @@ import java.util.List;
 public class ReviewsFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private ReviewAdapter reviewAdapter;
+    private UserReviewAdapter reviewAdapter; // Use UserReviewAdapter
     private ReviewRepository reviewRepository;
 
     @Nullable
@@ -30,7 +30,7 @@ public class ReviewsFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        reviewAdapter = new ReviewAdapter(new ArrayList<>());
+        reviewAdapter = new UserReviewAdapter(new ArrayList<>());
         recyclerView.setAdapter(reviewAdapter);
 
         reviewRepository = new ReviewRepository();
